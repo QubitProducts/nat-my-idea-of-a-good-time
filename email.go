@@ -41,7 +41,7 @@ func makeEmailAction() Action {
 	return makeAction(sendEmail)
 }
 
-func sendEmail(checkError error) {
+func sendEmail(checkError error) error {
 	glog.Infoln("Sending alert email")
 
 	msg := []byte(fmt.Sprintf(`From: %v
@@ -64,7 +64,5 @@ The NAT King
 		err = smtp.SendMail(smtpServer, smtp.CRAMMD5Auth(smtpUsername, smtpPassword), smtpSource, []string{smtpTarget}, msg)
 	}
 
-	if err != nil {
-		glog.Errorf("Failed to send email!")
-	}
+	return err
 }

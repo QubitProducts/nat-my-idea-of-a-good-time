@@ -2,10 +2,8 @@ package main
 
 import (
 	"flag"
-	"time"
 
 	"github.com/golang/glog"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -18,17 +16,6 @@ var (
 	secondaryRouteTableId string
 
 	awsRegion string
-
-	routeTableChangeDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name: "routetable_change_duration_milliseconds",
-		Help: "The duration of the route table change triggered by a failing health check",
-	})
-	routeTableChangeResults = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "routetable_change_total",
-		Help: "The count of the results (success, error) of the route table change operation",
-	},
-		[]string{"result"},
-	)
 )
 
 func init() {
@@ -36,9 +23,6 @@ func init() {
 	flag.StringVar(&primaryRouteTableId, "primary", "", "Primary route table id")
 	flag.StringVar(&secondaryRouteTableId, "secondary", "", "Secondary route table id")
 	flag.StringVar(&awsRegion, "region", "eu-west-1", "AWS region that the subnet and route tables are in")
-
-	prometheus.MustRegister(routeTableChangeDuration)
-	prometheus.MustRegister(routeTableChangeResults)
 }
 
 func makeRouteTableFailoverAction() Action {
@@ -48,12 +32,12 @@ func makeRouteTableFailoverAction() Action {
 	validateRouteTableId(c, primaryRouteTableId, "primary")
 	validateRouteTableId(c, secondaryRouteTableId, "secondary")
 
-	return makeAction(func(err error) {
-		failoverRouteTable(c, err)
+	return makeAction(func(err error) error {
+		return failoverRouteTable(c, err)
 	})
 }
 
-func failoverRouteTable(c *ec2.EC2, _ error) {
+func failoverRouteTable(c *ec2.EC2, _ error) error {
 	glog.Infof("Moving route table over to %v", secondaryRouteTableId)
 
 	req := &ec2.AssociateRouteTableInput{
@@ -62,17 +46,8 @@ func failoverRouteTable(c *ec2.EC2, _ error) {
 		SubnetId:     &subnetId,
 	}
 
-	started := time.Now()
 	_, err := c.AssociateRouteTable(req)
-	routeTableChangeDuration.Observe(float64(time.Now().Sub(started) / time.Millisecond))
-
-	if err != nil {
-		glog.Errorf("Failed to associate route table: %v", err)
-		routeTableChangeResults.WithLabelValues("error").Inc()
-	} else {
-		routeTableChangeResults.WithLabelValues("success").Inc()
-	}
-
+	return err
 }
 
 func validateRouteTableId(c *ec2.EC2, id, key string) {
