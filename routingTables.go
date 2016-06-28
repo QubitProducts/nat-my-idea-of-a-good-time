@@ -32,12 +32,12 @@ func makeRouteTableFailoverAction() Action {
 	validateRouteTableId(c, primaryRouteTableId, "primary")
 	validateRouteTableId(c, secondaryRouteTableId, "secondary")
 
-	return makeAction(func(err error) {
-		failoverRouteTable(c, err)
+	return makeAction(func(err error) error {
+		return failoverRouteTable(c, err)
 	})
 }
 
-func failoverRouteTable(c *ec2.EC2, _ error) {
+func failoverRouteTable(c *ec2.EC2, _ error) error {
 	glog.Infof("Moving route table over to %v", secondaryRouteTableId)
 
 	req := &ec2.AssociateRouteTableInput{
@@ -47,9 +47,7 @@ func failoverRouteTable(c *ec2.EC2, _ error) {
 	}
 
 	_, err := c.AssociateRouteTable(req)
-	if err != nil {
-		glog.Errorf("Failed to associate route table: %v", err)
-	}
+	return err
 }
 
 func validateRouteTableId(c *ec2.EC2, id, key string) {

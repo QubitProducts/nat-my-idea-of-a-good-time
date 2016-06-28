@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"time"
 	"net"
+	"net/http"
 
 	"github.com/golang/glog"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -14,6 +16,8 @@ var (
 	checkTimeout time.Duration
 	checkInterval time.Duration
 	checkFailureThreshold int
+
+	prometheusAddress string
 
 	dryRun bool
 )
@@ -24,7 +28,10 @@ func init() {
 	flag.DurationVar(&checkInterval, "interval", time.Second, "Interval to test connectivity")
 	flag.IntVar(&checkFailureThreshold, "threshold", 5, "Number of times the check may fail before action is taken")
 
+	flag.StringVar(&prometheusAddress, "prometheus", ":8080", "Address to expose the Prometheus monitoring handler")
+
 	flag.BoolVar(&dryRun, "dry-run", true, "Prevents any side affects occuring")
+
 }
 
 func main() {
@@ -35,8 +42,11 @@ func main() {
 	}
 
 	fa := newFanoutAction()
-	fa.AddAction(makeRouteTableFailoverAction())
-	fa.AddAction(makeEmailAction())
+	fa.AddAction("routetable", makeRouteTableFailoverAction())
+	fa.AddAction("email", makeEmailAction())
+
+	http.Handle("/metrics", prometheus.Handler())
+	go http.ListenAndServe(prometheusAddress, nil)
 
 	healthChecker(fa)
 }
@@ -65,7 +75,8 @@ func healthChecker(action Action) {
 
 			if consecutiveFailures >= checkFailureThreshold {
 				glog.Errorf("Consecutive failures greater than configured threshold")
-				action.Trigger(err)
+				go action.Trigger(err)
+				consecutiveFailures = 0
 			}
 		}
 	}
