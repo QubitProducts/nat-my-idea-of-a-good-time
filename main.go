@@ -7,8 +7,6 @@ import (
 	"net"
 
 	"github.com/golang/glog"
-
-	"github.com/tatsushid/go-fastping"
 )
 
 var (
