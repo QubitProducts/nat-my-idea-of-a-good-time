@@ -75,7 +75,8 @@ func healthChecker(action Action) {
 
 			if consecutiveFailures >= checkFailureThreshold {
 				glog.Errorf("Consecutive failures greater than configured threshold")
-				action.Trigger(err)
+				go action.Trigger(err)
+				consecutiveFailures = 0
 			}
 		}
 	}
