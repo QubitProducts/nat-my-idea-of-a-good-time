@@ -54,6 +54,7 @@ func healthChecker(action Action) {
 		select {
 		case <-time.After(checkTimeout):
 			err = fmt.Errorf("Check timed out after %v", checkTimeout)
+			glog.Errorf("Check timed out after %v", checkTimeout)
 		case err = <-checkChan:
 		}
 
@@ -62,7 +63,6 @@ func healthChecker(action Action) {
 			glog.Infof("Check succeeded")
 		} else {
 			consecutiveFailures++
-			glog.Errorf("Check failed: %v", err)
 			glog.Errorf("%v consecutive failures", consecutiveFailures)
 
 			if consecutiveFailures >= checkFailureThreshold {
@@ -73,29 +73,22 @@ func healthChecker(action Action) {
 	}
 }
 
-func checkEndpoint(url string) chan error {
+func checkEndpoint(host string) chan error {
 	res := make(chan error, 1)
 
 	go func() {
-		ra, err := net.ResolveIPAddr("ip4:icmp", checkTarget)
+		addr, err := net.ResolveIPAddr("ip4:icmp", host)
 		if err != nil {
+			glog.Errorf("Failed to resolve %v", host)
 			res <- err
 			return
 		}
 
-		p := fastping.NewPinger()
-		p.MaxRTT = (checkTimeout * 3) / 2
-		p.AddIPAddr(ra)
-		p.OnRecv = func(addr *net.IPAddr, rtt time.Duration) {
-			res <- nil
-			p.Stop()
+		err = doPing(addr, checkTimeout * 3 / 2)
+		if err != nil {
+			glog.Errorf("Failed to ping %v: %v", host, err)
 		}
-		p.OnIdle = func() {
-			p.Stop()
-			res <- fmt.Errorf("No reply within %v", p.MaxRTT)
-		}
-
-		p.RunLoop()
+		res <- err
 	}()
 
 	return res
