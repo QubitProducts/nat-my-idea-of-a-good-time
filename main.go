@@ -46,6 +46,9 @@ func main() {
 	fa.AddAction("email", makeEmailAction())
 
 	http.Handle("/metrics", prometheus.Handler())
+	http.HandleFunc("/status", func (w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "OK")
+	})
 	go http.ListenAndServe(prometheusAddress, nil)
 
 	healthChecker(fa)
