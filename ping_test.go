@@ -1,9 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"time"
-	"fmt"
 
 	"testing"
 )
@@ -22,14 +22,13 @@ func getAddr(host string) (net.Addr, error) {
 	return nil, fmt.Errorf("no A or AAAA record")
 }
 
-
 func TestPingGoogle(t *testing.T) {
 	addr, err := getAddr("google.com")
 	if err != nil {
 		t.Error(err)
 	}
 
-	err = doPing(addr, time.Second * 1)
+	err = doPing(addr, time.Second*1)
 	if err != nil {
 		t.Error(err)
 	}

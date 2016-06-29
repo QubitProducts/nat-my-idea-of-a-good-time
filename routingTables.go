@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -16,19 +17,16 @@ var (
 	subnetId              string
 	primaryRouteTableId   string
 	secondaryRouteTableId string
-
-	awsRegion string
 )
 
 func init() {
-	flag.StringVar(&subnetId, "subnet", "", "Subnet ID")
-	flag.StringVar(&primaryRouteTableId, "primary", "", "Primary route table id")
-	flag.StringVar(&secondaryRouteTableId, "secondary", "", "Secondary route table id")
-	flag.StringVar(&awsRegion, "region", "eu-west-1", "AWS region that the subnet and route tables are in")
+	flag.StringVar(&subnetId, "subnet", os.Getenv("NAT_SUBNET", ""), "Subnet ID")
+	flag.StringVar(&primaryRouteTableId, "primary", os.Getenv("NAT_PRIMARY", ""), "Primary route table id")
+	flag.StringVar(&secondaryRouteTableId, "secondary", os.Getenv("NAT_SECONDARY", ""), "Secondary route table id")
 }
 
 func makeRouteTableFailoverAction() Action {
-	c := ec2.New(session.New(&aws.Config{Region: aws.String(awsRegion)}))
+	c := ec2.New(session.New(&aws.Config{}))
 
 	validateSubnetId(c, subnetId)
 	validateRouteTableId(c, primaryRouteTableId, "primary")
@@ -49,7 +47,7 @@ func failoverRouteTable(c *ec2.EC2, _ error) error {
 	}
 
 	disassocReq := &ec2.DisassociateRouteTableInput{
-		DryRun: &dryRun,
+		DryRun:        &dryRun,
 		AssociationId: &associationId,
 	}
 	_, err = c.DisassociateRouteTable(disassocReq)

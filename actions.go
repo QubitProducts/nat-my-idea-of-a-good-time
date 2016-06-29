@@ -22,7 +22,7 @@ var (
 	)
 )
 
-func init () {
+func init() {
 	prometheus.MustRegister(actionTriggerDuration)
 	prometheus.MustRegister(actionTriggerResults)
 }
@@ -51,7 +51,7 @@ func (fa *FanoutAction) Trigger(upstreamErr error) error {
 	glog.Infof("Async fanning out %v actions", len(fa.actions))
 
 	for name, act := range fa.actions {
-		go func (name string, act Action) {
+		go func(name string, act Action) {
 			started := time.Now()
 			err := act.Trigger(upstreamErr)
 			actionTriggerDuration.

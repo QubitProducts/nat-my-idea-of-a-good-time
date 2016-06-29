@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 	"net/smtp"
+	"os"
 
 	"github.com/golang/glog"
 )
@@ -17,15 +18,15 @@ var (
 )
 
 func init() {
-	flag.StringVar(&smtpServer, "smtp-server", "", "SMTP server use for alert sending")
-	flag.StringVar(&smtpUsername, "smtp-username", "", "SMTP server username")
-	flag.StringVar(&smtpPassword, "smtp-password", "", "SMTP server password")
-	flag.StringVar(&smtpSource, "smtp-source", "", "Email address to send alerts as")
-	flag.StringVar(&smtpTarget, "smtp-target", "", "Email address to send alerts to")
+	flag.StringVar(&smtpServer, "smtp-server", os.Getenv("NAT_SMTP_SERVER", ""), "SMTP server use for alert sending")
+	flag.StringVar(&smtpUsername, "smtp-username", os.Getenv("NAT_SMTP_USERNAME", ""), "SMTP server username")
+	flag.StringVar(&smtpPassword, "smtp-password", os.Getenv("NAT_SMTP_PASSWORD", ""), "SMTP server password")
+	flag.StringVar(&smtpSource, "smtp-source", os.Getenv("NAT_SMTP_SOURCE", ""), "Email address to send alerts as")
+	flag.StringVar(&smtpTarget, "smtp-target", os.Getenv("NAT_SMTP_TARGET", ""), "Email address to send alerts to")
 }
 
 func makeEmailAction() Action {
-	if smtpServer + smtpUsername + smtpPassword + smtpSource + smtpTarget == "" {
+	if smtpServer+smtpUsername+smtpPassword+smtpSource+smtpTarget == "" {
 		glog.Infof("Skipping email action due to absent configuration")
 		return nil
 	}

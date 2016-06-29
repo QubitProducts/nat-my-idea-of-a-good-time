@@ -1,10 +1,10 @@
 package main
 
 import (
-	"net"
-	"math/rand"
-	"os"
 	"fmt"
+	"math/rand"
+	"net"
+	"os"
 	"time"
 
 	"golang.org/x/net/icmp"
