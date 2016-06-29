@@ -25,22 +25,14 @@ var (
 )
 
 func init() {
-	flag.StringVar(&checkTarget, "target", os.Getenv("NAT_TARGET", ""), "Hostname to test")
-	flag.DurationVar(&checkTimeout, "timeout", time.Millisecond*mustInt(os.Getenv("NAT_TIMEOUT_MS", "500")), "Timeout for NAT check in milliseconds")
-	flag.DurationVar(&checkInterval, "interval", time.Milliseconds*mustInt(os.Getenv("NAT_INTERVAL_MS", "1000")), "Interval to test connectivity in milliseconds")
-	flag.IntVar(&checkFailureThreshold, "threshold", mustInt(os.Getenv("NAT_THRESHOLD", "5")), "Number of times the check may fail before action is taken")
+	flag.StringVar(&checkTarget, "target", getEnv("NAT_TARGET", ""), "Hostname to test")
+	flag.DurationVar(&checkTimeout, "timeout", getEnvMs("NAT_TIMEOUT_MS", 500), "Timeout for NAT check in milliseconds")
+	flag.DurationVar(&checkInterval, "interval", getEnvMs("NAT_INTERVAL_MS", 1000), "Interval to test connectivity in milliseconds")
+	flag.IntVar(&checkFailureThreshold, "threshold", getEnvInt("NAT_THRESHOLD", 5), "Number of times the check may fail before action is taken")
 
-	flag.StringVar(&prometheusAddress, "prometheus", os.Getenv("NAT_PROMETHEUS", ":8080"), "Address to expose the Prometheus monitoring handler")
+	flag.StringVar(&prometheusAddress, "prometheus", getEnv("NAT_PROMETHEUS", ":8080"), "Address to expose the Prometheus monitoring handler")
 
-	flag.BoolVar(&dryRun, "dry-run", mustBool(os.Getenv("NAT_DRY_RUN"), "true"), "Prevents any side affects occuring")
-}
-
-func mustInt(str string) int {
-	v, err := strconv.Atoi(str)
-	if err != nil {
-		glog.Fatalf("Failed to parse %v as integer: %v", str, err)
-	}
-	return v
+	flag.BoolVar(&dryRun, "dry-run", getEnvBool("NAT_DRY_RUN", true), "Prevents any side affects occuring")
 }
 
 func main() {
@@ -113,4 +105,36 @@ func checkEndpoint(host string) chan error {
 	}()
 
 	return res
+}
+
+func getEnv(key, def string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		return def
+	}
+	return val
+}
+
+func getEnvInt(key string, def int) int {
+	val := os.Getenv(key)
+	if val == "" {
+		return def
+	}
+	intVal, err := strconv.Atoi(val)
+	if err != nil {
+		glog.Fatalf("Failed to parse %v as integer: %v", val, err)
+	}
+	return intVal
+}
+
+func getEnvMs(key string, def int) time.Duration {
+	return time.Millisecond * time.Duration(getEnvInt(key, def))
+}
+
+func getEnvBool(key string, def bool) bool {
+	val := os.Getenv(key)
+	if val == "" {
+		return def
+	}
+	return val == "true"
 }

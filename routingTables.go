@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
@@ -20,9 +19,9 @@ var (
 )
 
 func init() {
-	flag.StringVar(&subnetId, "subnet", os.Getenv("NAT_SUBNET", ""), "Subnet ID")
-	flag.StringVar(&primaryRouteTableId, "primary", os.Getenv("NAT_PRIMARY", ""), "Primary route table id")
-	flag.StringVar(&secondaryRouteTableId, "secondary", os.Getenv("NAT_SECONDARY", ""), "Secondary route table id")
+	flag.StringVar(&subnetId, "subnet", getEnv("NAT_SUBNET", ""), "Subnet ID")
+	flag.StringVar(&primaryRouteTableId, "primary", getEnv("NAT_PRIMARY", ""), "Primary route table id")
+	flag.StringVar(&secondaryRouteTableId, "secondary", getEnv("NAT_SECONDARY", ""), "Secondary route table id")
 }
 
 func makeRouteTableFailoverAction() Action {
