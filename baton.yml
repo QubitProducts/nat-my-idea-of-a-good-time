@@ -1,0 +1,108 @@
+---
+project:
+  metadata:
+    name: nat-my-idea-of-a-good-time
+    version: 1
+
+marathon:
+  - id: nat-my-idea-of-a-good-time/eu-west-1a
+    user: "{{ name }}"
+    cmd: >
+      . /secrets.env &&
+      . /config.env &&
+      ./nat-my-idea-of-a-good-time \
+        -logtostderr \
+        -subnet $SUBNET \
+        -primary $PRIMARY_ROUTE \
+        -secondary $SECONDARY_ROUTE \
+        -target $PING_TARGET \
+        -smtp-server $SMTP_SERVER \
+        -smtp-source $SMTP_SOURCE \
+        -smtp-target $SMTP_TARGET \
+        -smtp-username $SMTP_USERNAME \
+        -smtp-password $SMTP_PASSWORD \
+        -dry-run $DRY_RUN
+    portMappings:
+      - containerPort: 8080
+        protocol: tcp
+    healthChecks:
+      - protocol: HTTP
+        path: /metrics
+        portIndex: 0
+    volumes:
+      - hostPath: /etc/qubit/deployers/{{ name }}/secrets.env
+        containerPath: /secrets.env
+        mode: RO
+      - hostPath: /etc/qubit/deployers/{{ name }}/eu-west-1a.env
+        containerPath: /config.env
+        mode: RO
+    constraints:
+      - ["AZ", "UNLIKE", "eu-west-1a"]
+
+  - id: nat-my-idea-of-a-good-time/eu-west-1b
+    user: "{{ name }}"
+    cmd: >
+      . /secrets.env &&
+      . /config.env &&
+      ./nat-my-idea-of-a-good-time \
+        -logtostderr \
+        -subnet $SUBNET \
+        -primary $PRIMARY_ROUTE \
+        -secondary $SECONDARY_ROUTE \
+        -target $PING_TARGET \
+        -smtp-server $SMTP_SERVER \
+        -smtp-source $SMTP_SOURCE \
+        -smtp-target $SMTP_TARGET \
+        -smtp-username $SMTP_USERNAME \
+        -smtp-password $SMTP_PASSWORD \
+        -dry-run $DRY_RUN
+    portMappings:
+      - containerPort: 8080
+        protocol: tcp
+    healthChecks:
+      - protocol: HTTP
+        path: /metrics
+        portIndex: 0
+    volumes:
+      - hostPath: /etc/qubit/deployers/{{ name }}/secrets.env
+        containerPath: /secrets.env
+        mode: RO
+      - hostPath: /etc/qubit/deployers/{{ name }}/eu-west-1b.env
+        containerPath: /config.env
+        mode: RO
+    constraints:
+      - ["AZ", "UNLIKE", "eu-west-1b"]
+
+  - id: nat-my-idea-of-a-good-time/eu-west-1c
+    user: "{{ name }}"
+    cmd: >
+      . /secrets.env &&
+      . /config.env &&
+      ./nat-my-idea-of-a-good-time \
+        -logtostderr \
+        -subnet $SUBNET \
+        -primary $PRIMARY_ROUTE \
+        -secondary $SECONDARY_ROUTE \
+        -target $PING_TARGET \
+        -smtp-server $SMTP_SERVER \
+        -smtp-source $SMTP_SOURCE \
+        -smtp-target $SMTP_TARGET \
+        -smtp-username $SMTP_USERNAME \
+        -smtp-password $SMTP_PASSWORD \
+        -dry-run $DRY_RUN
+    portMappings:
+      - containerPort: 8080
+        protocol: tcp
+    healthChecks:
+      - protocol: HTTP
+        path: /metrics
+        portIndex: 0
+    volumes:
+      - hostPath: /etc/qubit/deployers/{{ name }}/secrets.env
+        containerPath: /secrets.env
+        mode: RO
+      - hostPath: /etc/qubit/deployers/{{ name }}/eu-west-1c.env
+        containerPath: /config.env
+        mode: RO
+    constraints:
+      - ["AZ", "UNLIKE", "eu-west-1c"]
