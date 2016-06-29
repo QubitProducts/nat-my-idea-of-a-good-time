@@ -11,6 +11,7 @@ var (
 	actionTriggerDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "action_trigger_duration_milliseconds",
 		Help: "The time taken to trigger each action",
+		Buckets: prometheus.LinearBuckets(0, 1000, 10),
 	},
 		[]string{"action"},
 	)
