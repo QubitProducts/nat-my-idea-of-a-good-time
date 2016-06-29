@@ -14,6 +14,8 @@ import (
 )
 
 var (
+	subnetName string
+
 	checkTarget           string
 	checkTimeout          time.Duration
 	checkInterval         time.Duration
@@ -22,9 +24,24 @@ var (
 	prometheusAddress string
 
 	dryRun bool
+
+	checkDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "check_duration_seconds",
+		Help: "The time taken for the check to run, bounded by the check timeout",
+		Buckets: prometheus.LinearBuckets(0, 200, 10),
+	},
+		[]string{"subnet"},
+	)
+	checkCount = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "check_total",
+		Help: "The number of times that the check has been run, with labels for different outcomes",
+	},
+		[]string{"subnet", "result"},
+	)
 )
 
 func init() {
+	flag.StringVar(&subnetName, "name", getEnv("NAT_NAME", ""), "Name of the nat/subnet/route table combination is being monitored")
 	flag.StringVar(&checkTarget, "target", getEnv("NAT_TARGET", ""), "Hostname to test")
 	flag.DurationVar(&checkTimeout, "timeout", getEnvMs("NAT_TIMEOUT_MS", 500), "Timeout for NAT check in milliseconds")
 	flag.DurationVar(&checkInterval, "interval", getEnvMs("NAT_INTERVAL_MS", 1000), "Interval to test connectivity in milliseconds")
@@ -33,6 +50,9 @@ func init() {
 	flag.StringVar(&prometheusAddress, "prometheus", getEnv("NAT_PROMETHEUS", ":8080"), "Address to expose the Prometheus monitoring handler")
 
 	flag.BoolVar(&dryRun, "dry-run", getEnvBool("NAT_DRY_RUN", true), "Prevents any side affects occuring")
+
+	prometheus.MustRegister(checkDuration)
+	prometheus.MustRegister(checkCount)
 }
 
 func main() {
@@ -40,6 +60,9 @@ func main() {
 
 	if checkTarget == "" {
 		glog.Fatalln("No health check target specified")
+	}
+	if subnetName == "" {
+		subnetName = subnetId
 	}
 
 	fa := newFanoutAction()
@@ -62,26 +85,32 @@ func healthChecker(action Action) {
 	for range ticker {
 		var err error
 
+		started := time.Now()
 		checkChan := checkEndpoint(checkTarget)
 		select {
 		case <-time.After(checkTimeout):
 			err = fmt.Errorf("Check timed out after %v", checkTimeout)
 			glog.Errorf("Check timed out after %v", checkTimeout)
+			checkCount.WithLabelValues(subnetName, "timeout").Inc()
 		case err = <-checkChan:
 		}
+		checkDuration.WithLabelValues(subnetName).
+			Observe(float64(time.Now().Sub(started))/float64(time.Second))
 
 		if err == nil {
+			checkCount.WithLabelValues(subnetName, "success").Inc()
 			consecutiveFailures = 0
 			glog.Infof("Check succeeded")
 		} else {
+			checkCount.WithLabelValues(subnetName, "error").Inc()
 			consecutiveFailures++
 			glog.Errorf("%v consecutive failures", consecutiveFailures)
+		}
 
-			if consecutiveFailures >= checkFailureThreshold {
-				glog.Errorf("Consecutive failures greater than configured threshold")
-				go action.Trigger(err)
-				consecutiveFailures = 0
-			}
+		if consecutiveFailures >= checkFailureThreshold {
+			glog.Errorf("Consecutive failures greater than configured threshold")
+			go action.Trigger(err)
+			consecutiveFailures = 0
 		}
 	}
 }
