@@ -46,20 +46,20 @@ func sendEmail(checkError error) error {
 
 	msg := []byte(fmt.Sprintf(`From: %v
 To: %v
-Subject: NAT FAILURE
+Subject: %v NAT FAILURE
 
-HEY YOUR NAT'S BROKEN! I FAILED IT OVER FOR YOU (HOPEFULLY)
+HEY YOUR NAT'S BROKEN IN %v! I FAILED IT OVER FOR YOU (HOPEFULLY)
 
 My health check failed with the error %v
 
 Yours, always,
 
 The NAT King
-`, smtpTarget, smtpSource, checkError))
+`, subnetName, subnetName, smtpTarget, smtpSource, checkError))
 
 	var err error
 	if dryRun {
-		glog.Infof("Would be sending email: %v", msg)
+		glog.Infof("Would be sending email: %v", string(msg))
 	} else {
 		err = smtp.SendMail(smtpServer, smtp.CRAMMD5Auth(smtpUsername, smtpPassword), smtpSource, []string{smtpTarget}, msg)
 	}
