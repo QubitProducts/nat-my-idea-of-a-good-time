@@ -13,13 +13,13 @@ var (
 		Help: "The time taken to trigger each action",
 		Buckets: prometheus.LinearBuckets(0, 1000, 10),
 	},
-		[]string{"action"},
+		[]string{"subnet", "action"},
 	)
 	actionTriggerResults = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "action_trigger_total",
 		Help: "The count of the results of triggering each action",
 	},
-		[]string{"action", "result"},
+		[]string{"subnet", "action", "result"},
 	)
 )
 
@@ -56,15 +56,15 @@ func (fa *FanoutAction) Trigger(upstreamErr error) error {
 			started := time.Now()
 			err := act.Trigger(upstreamErr)
 			actionTriggerDuration.
-				WithLabelValues(name).
+				WithLabelValues(subnetName, name).
 				Observe(float64(time.Now().Sub(started) / time.Millisecond))
 
 			if err != nil {
 				glog.Errorf("Action %v failed: %v", name, err)
-				actionTriggerResults.WithLabelValues(name, "error").Inc()
+				actionTriggerResults.WithLabelValues(subnetName, name, "error").Inc()
 			} else {
 				glog.Infof("Action %v succeeded", name)
-				actionTriggerResults.WithLabelValues(name, "success").Inc()
+				actionTriggerResults.WithLabelValues(subnetName, name, "success").Inc()
 			}
 		}(name, act)
 	}
