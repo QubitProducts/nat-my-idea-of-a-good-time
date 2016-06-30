@@ -29,3 +29,5 @@ marathon:
       mode: RO
   constraints:
     - ["AZ", "UNIQUE"]
+  upgradeStrategy:
+    minimumHealthCapacity: 0
