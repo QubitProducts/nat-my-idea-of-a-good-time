@@ -8,8 +8,8 @@ marathon:
   instances: 3
   cmd: ./docker_run.sh
   env:
-    NAT_TIMEOUT_MS: 900
-    NAT_THRESHOLD: 10
+    NAT_TIMEOUT_MS: "900"
+    NAT_THRESHOLD: "10"
   portMappings:
     - containerPort: 8080
       protocol: tcp
