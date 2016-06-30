@@ -26,14 +26,14 @@ var (
 	dryRun bool
 
 	checkDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "check_duration_seconds",
+		Name: "natcheck_ping_duration_seconds",
 		Help: "The time taken for the check to run, bounded by the check timeout",
 		Buckets: prometheus.LinearBuckets(0, 200, 10),
 	},
 		[]string{"subnet"},
 	)
 	checkCount = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "check_total",
+		Name: "natcheck_ping_total",
 		Help: "The number of times that the check has been run, with labels for different outcomes",
 	},
 		[]string{"subnet", "result"},

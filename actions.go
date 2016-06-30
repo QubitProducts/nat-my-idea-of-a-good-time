@@ -9,14 +9,14 @@ import (
 
 var (
 	actionTriggerDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "action_trigger_duration_milliseconds",
+		Name: "natcheck_action_duration_milliseconds",
 		Help: "The time taken to trigger each action",
 		Buckets: prometheus.LinearBuckets(0, 1000, 10),
 	},
 		[]string{"subnet", "action"},
 	)
 	actionTriggerResults = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "action_trigger_total",
+		Name: "natcheck_action_total",
 		Help: "The count of the results of triggering each action",
 	},
 		[]string{"subnet", "action", "result"},
