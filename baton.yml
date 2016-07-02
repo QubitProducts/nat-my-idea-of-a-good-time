@@ -6,6 +6,8 @@ project:
 
 marathon:
   instances: 3
+  mem: 64
+  cpus: 0.1
   cmd: ./docker_run.sh
   env:
     NAT_TIMEOUT_MS: "900"
@@ -17,6 +19,8 @@ marathon:
     - protocol: HTTP
       path: /metrics
       portIndex: 0
+      intervalSeconds: 10
+      timeoutSeconds: 2
   volumes:
     - hostPath: /etc/qubit/deployers/{{ name }}/secrets.env
       containerPath: /secrets.env
