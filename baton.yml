@@ -33,4 +33,4 @@ marathon:
   constraints:
     - ["AZ", "UNIQUE"]
   upgradeStrategy:
-    minimumHealthCapacity: 0
+    minimumHealthCapacity: 0.5
